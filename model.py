@@ -48,7 +48,11 @@ transform = transforms.Compose([
 images = get_pickle_data(train_filename)
 labels = get_labels_from_csv()
 
-print(labels)
+example_image = images[0].astype(int)
+vis2 = cv2.cvtColor(example_image, cv2.COLOR_GRAY2BGR)
+ret,thresh = cv2.threshold(vis2,127,255,0)
+img, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_FLOODFILL,cv2.CHAIN_APPROX_NONE)
+cv2.drawContours(img, contours, 3, (0,255,0), 3)
 
 #print(image.shape)
 #print(device)
