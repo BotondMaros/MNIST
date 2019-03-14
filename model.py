@@ -48,11 +48,29 @@ transform = transforms.Compose([
 images = get_pickle_data(train_filename)
 labels = get_labels_from_csv()
 
-example_image = images[0].astype(int)
-vis2 = cv2.cvtColor(example_image, cv2.COLOR_GRAY2BGR)
-ret,thresh = cv2.threshold(vis2,127,255,0)
-img, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_FLOODFILL,cv2.CHAIN_APPROX_NONE)
-cv2.drawContours(img, contours, 3, (0,255,0), 3)
+image = images[0]
+cv2.imwrite('image.jpg',image)
+
+img_gray = cv2.imread('image.jpg',cv2.CV_8UC1)
+plt.imshow(img_gray,cmap='gray')
+plt.show()
+
+(thresh, img_bin) = cv2.threshold(img_gray, 128, 255, cv2.THRESH_OTSU)
+plt.imshow(img_bin,cmap='gray')
+plt.title('Threshold: {}'.format(thresh))
+plt.show()
+
+contours,_ = cv2.findContours(img_bin.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+countours_largest = sorted(contours, key=lambda x: cv2.contourArea(x))[-1]
+bb=cv2.boundingRect(countours_largest)
+
+pt1=(bb[0],bb[1]) # upper coordinates 
+pt2=(bb[0]+bb[2],bb[1]+bb[3]) # lower coordinates
+img_gray_bb=img_gray.copy()
+cv2.rectangle(img_gray_bb,pt1,pt2,255,1)
+plt.imshow(img_gray_bb,cmap='gray')
+plt.show()
+
 
 #print(image.shape)
 #print(device)
