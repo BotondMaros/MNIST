@@ -60,28 +60,28 @@ plt.imshow(image,cmap='gray')
 plt.show()
 
 blur = cv2.GaussianBlur(image,(7,7),0)
-ret3,img_bin = cv2.threshold(blur,127,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+ret3,img_bin = cv2.threshold(blur,128,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 plt.imshow(img_bin,cmap='gray')
 plt.title('Threshold: ')
 plt.show()
 
 contours,_ = cv2.findContours(img_bin.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 countours_largest = sorted(contours, key=lambda x: cv2.contourArea(x))[-2]
-print(countours_largest)
 bb=cv2.boundingRect(countours_largest)
-print(bb)
 
 
-maskimage2 = cv2.inRange(bb, 1, 255)
-out = cv2.bitwise_and(img_bin, img_bin, mask=maskimage2)
-plt.imshow(out,cmap='gray')
+white = (np.zeros(image.shape)).astype(np.uint8)
+mask = cv2.drawContours(white, contours,-2,255,-1)
+out = cv2.bitwise_and(img_bin, mask)
+plt.imshow(white,cmap='gray')
 plt.title('Filter: ')
 plt.show()
 
+'''
 pt1=(bb[0],bb[1]) # upper coordinates 
 pt2=(bb[0]+bb[2],bb[1]+bb[3]) # lower coordinates
 img_gray_bb=image.copy()
 cv2.rectangle(img_gray_bb,pt1,pt2,255,1)
 plt.imshow(img_gray_bb,cmap='gray')
 plt.show()
-
+'''
