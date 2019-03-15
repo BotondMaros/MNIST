@@ -38,42 +38,50 @@ def get_pickle_data(filename):
 def get_labels_from_csv():
     return pd.read_csv(labels_filename)
 
+def convert_images(images):
+    return((images*255).astype(np.uint8))
 
-transform = transforms.Compose([
-    transforms.Resize((224,224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
+def get_biggest_digit(image):
+    blur = cv2.GaussianBlur(image,(7,7),0)
+    _,img_bin = cv2.threshold(blur,127,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    contours,_ = cv2.findContours(img_bin.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    countours_largest = sorted(contours, key=lambda x: cv2.contourArea(x))[-2]
+    # filter everything outside contour?
+    bb=cv2.boundingRect(countours_largest)
+    # return numpy array of single biggest digit on uniform background
+    return
+
 
 images = get_pickle_data(train_filename)
 labels = get_labels_from_csv()
 
-image = images[0]
-cv2.imwrite('image.jpg',image)
-
-img_gray = cv2.imread('image.jpg',cv2.CV_8UC1)
-plt.imshow(img_gray,cmap='gray')
+image = (images[16]*255).astype(np.uint8)
+plt.imshow(image,cmap='gray')
 plt.show()
 
-(thresh, img_bin) = cv2.threshold(img_gray, 128, 255, cv2.THRESH_OTSU)
+blur = cv2.GaussianBlur(image,(7,7),0)
+ret3,img_bin = cv2.threshold(blur,127,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 plt.imshow(img_bin,cmap='gray')
-plt.title('Threshold: {}'.format(thresh))
+plt.title('Threshold: ')
 plt.show()
 
 contours,_ = cv2.findContours(img_bin.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-countours_largest = sorted(contours, key=lambda x: cv2.contourArea(x))[-1]
+countours_largest = sorted(contours, key=lambda x: cv2.contourArea(x))[-2]
+print(countours_largest)
 bb=cv2.boundingRect(countours_largest)
+print(bb)
+
+
+maskimage2 = cv2.inRange(bb, 1, 255)
+out = cv2.bitwise_and(img_bin, img_bin, mask=maskimage2)
+plt.imshow(out,cmap='gray')
+plt.title('Filter: ')
+plt.show()
 
 pt1=(bb[0],bb[1]) # upper coordinates 
 pt2=(bb[0]+bb[2],bb[1]+bb[3]) # lower coordinates
-img_gray_bb=img_gray.copy()
+img_gray_bb=image.copy()
 cv2.rectangle(img_gray_bb,pt1,pt2,255,1)
 plt.imshow(img_gray_bb,cmap='gray')
 plt.show()
-
-
-#print(image.shape)
-#print(device)
-#plt.imshow(image)
-#plt.show()
 
