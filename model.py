@@ -39,49 +39,57 @@ def get_labels_from_csv():
     return pd.read_csv(labels_filename)
 
 def convert_images(images):
-    return((images*255).astype(np.uint8))
+    convert = lambda image: (image*255).astype(np.uint8)
+    converted = np.apply_along_axis(convert,0,images)
+    return(converted)
 
 def get_biggest_digit(image):
     blur = cv2.GaussianBlur(image,(7,7),0)
-    _,img_bin = cv2.threshold(blur,127,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    _,img_bin = cv2.threshold(blur,127,255,cv2.THRESH_OTSU)
     contours,_ = cv2.findContours(img_bin.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    countours_largest = sorted(contours, key=lambda x: cv2.contourArea(x))[-2]
-    # filter everything outside contour?
-    bb=cv2.boundingRect(countours_largest)
-    # return numpy array of single biggest digit on uniform background
-    return
+    cont = np.array(contours)
+    largest = sorted(contours, key=lambda x: cv2.contourArea(x))[-2]
+    index = contours.index(largest)
+    white = (np.zeros(image.shape)).astype(np.uint8)
+    mask = cv2.drawContours(white, contours,index,255,-1)
+    return(mask)
 
+def get_biggest_digit2(image):
+    img_bin = cv2.adaptiveThreshold(image,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,5)
+    contours,_ = cv2.findContours(img_bin.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
+    largest = sorted(contours, key=lambda x: cv2.contourArea(x))[-2]
+    index = contours.index(largest.all())
+    white = (np.zeros(image.shape)).astype(np.uint8)
+    mask = cv2.drawContours(white, contours,index,255,-1)
+    return(mask)
+
+
+def filter_images(images):
+    fil = lambda image: get_biggest_digit(image)
+    single = np.apply_along_axis(fil,0,images)
+    return(single)
+
+def filter_images2(images):
+    for i in range(len(images)):
+        images[i] = get_biggest_digit(images[i].copy())
+    return(images)
 
 images = get_pickle_data(train_filename)
 labels = get_labels_from_csv()
+'''
+image = filter_images2(convert_images(images))[16]
+plt.imshow(image)
+plt.show()
 
-image = (images[16]*255).astype(np.uint8)
+'''
+converted_images = convert_images(images)
+
+
+image = get_biggest_digit(converted_images[16])
 plt.imshow(image,cmap='gray')
 plt.show()
-
-blur = cv2.GaussianBlur(image,(7,7),0)
-ret3,img_bin = cv2.threshold(blur,128,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-plt.imshow(img_bin,cmap='gray')
-plt.title('Threshold: ')
+image2 = get_biggest_digit2(converted_images[16])
+plt.imshow(image2,cmap='gray')
 plt.show()
 
-contours,_ = cv2.findContours(img_bin.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-countours_largest = sorted(contours, key=lambda x: cv2.contourArea(x))[-2]
-bb=cv2.boundingRect(countours_largest)
-
-
-white = (np.zeros(image.shape)).astype(np.uint8)
-mask = cv2.drawContours(white, contours,-2,255,-1)
-out = cv2.bitwise_and(img_bin, mask)
-plt.imshow(white,cmap='gray')
-plt.title('Filter: ')
-plt.show()
-
-'''
-pt1=(bb[0],bb[1]) # upper coordinates 
-pt2=(bb[0]+bb[2],bb[1]+bb[3]) # lower coordinates
-img_gray_bb=image.copy()
-cv2.rectangle(img_gray_bb,pt1,pt2,255,1)
-plt.imshow(img_gray_bb,cmap='gray')
-plt.show()
-'''
