@@ -19,6 +19,7 @@ from torch.autograd import Variable
 
 data_folder = './data/'
 train_filename = data_folder + 'train_images.pkl'
+filtered_filename = data_folder + 'filtered_images.pkl'
 labels_filename = data_folder + 'train_labels.csv'
 test_filename = data_folder + 'test_images.pkl'
 validation_cutoff = 35000
@@ -38,42 +39,68 @@ def get_pickle_data(filename):
 def get_labels_from_csv():
     return pd.read_csv(labels_filename)
 
+def convert_images(images):
+    convert = lambda image: (image*255).astype(np.uint8)
+    converted = np.apply_along_axis(convert,0,images)
+    return(converted)
 
-transform = transforms.Compose([
-    transforms.Resize((224,224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
+def get_biggest_digit(image):
+    blur = cv2.GaussianBlur(image,(7,7),0)
+    _,img_bin = cv2.threshold(blur,127,255,cv2.THRESH_OTSU)
+    contours,_ = cv2.findContours(img_bin.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contareas = [cv2.contourArea(c) for c in contours]
+    sorted_contareas = sorted(contareas)
+    index = contareas.index(sorted_contareas[-1])
+    white = (np.zeros(image.shape)).astype(np.uint8)
+    mask = cv2.drawContours(white, contours,index,255,-1)
+    return(mask)
+
+def get_biggest_digit2(image):
+    img_bin = cv2.adaptiveThreshold(image,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,5)
+    contours,_ = cv2.findContours(img_bin.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contareas = [cv2.contourArea(c) for c in contours]
+    sorted_contareas = sorted(contareas)
+    index = contareas.index(sorted_contareas[-1])
+    white = (np.zeros(image.shape)).astype(np.uint8)
+    mask = cv2.drawContours(white, contours,index,255,-1)
+    return(mask)
+
+def filter_images(images):
+    fil = lambda image: get_biggest_digit(image)
+    single = np.apply_along_axis(fil,0,images)
+    return(single)
+
+def filter_images2(images):
+    for i in range(len(images)):
+        images[i] = get_biggest_digit(images[i].copy())
+    return(images)
 
 images = get_pickle_data(train_filename)
 labels = get_labels_from_csv()
 
+'''
+first = images[0]
+plt.imshow(first)
+plt.show()
+
+'''
+#Filtering the noise in raw data
+
+converted_images = convert_images(images)
+
+ex = get_biggest_digit(converted_images[0])
+plt.imshow(ex)
+plt.show()
+
+filtered_images = filter_images(converted_images)
+
+first = filtered_images[0]
+plt.imshow(first)
+plt.show()
+
+pkl.dump(filtered_images, open('./data/filtered_images.pkl','wb'))
+
+images = get_pickle_data(filtered_filename)
 image = images[0]
-cv2.imwrite('image.jpg',image)
-
-img_gray = cv2.imread('image.jpg',cv2.CV_8UC1)
-plt.imshow(img_gray,cmap='gray')
+plt.imshow(image)
 plt.show()
-
-(thresh, img_bin) = cv2.threshold(img_gray, 128, 255, cv2.THRESH_OTSU)
-plt.imshow(img_bin,cmap='gray')
-plt.title('Threshold: {}'.format(thresh))
-plt.show()
-
-contours,_ = cv2.findContours(img_bin.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-countours_largest = sorted(contours, key=lambda x: cv2.contourArea(x))[-1]
-bb=cv2.boundingRect(countours_largest)
-
-pt1=(bb[0],bb[1]) # upper coordinates 
-pt2=(bb[0]+bb[2],bb[1]+bb[3]) # lower coordinates
-img_gray_bb=img_gray.copy()
-cv2.rectangle(img_gray_bb,pt1,pt2,255,1)
-plt.imshow(img_gray_bb,cmap='gray')
-plt.show()
-
-
-#print(image.shape)
-#print(device)
-#plt.imshow(image)
-#plt.show()
-
