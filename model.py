@@ -45,12 +45,11 @@ def convert_images(images):
     return(converted)
 
 def get_biggest_digit(image):
-    blur = cv2.GaussianBlur(image,(7,7),0)
-    _,img_bin = cv2.threshold(blur,127,255,cv2.THRESH_OTSU)
+    _,img_bin = cv2.threshold(image,127,255,cv2.THRESH_OTSU)
     contours,_ = cv2.findContours(img_bin.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     contareas = [cv2.contourArea(c) for c in contours]
     sorted_contareas = sorted(contareas)
-    index = contareas.index(sorted_contareas[-1])
+    index = contareas.index(sorted_contareas[-2])
     white = (np.zeros(image.shape)).astype(np.uint8)
     mask = cv2.drawContours(white, contours,index,255,-1)
     return(mask)
@@ -88,10 +87,11 @@ plt.show()
 
 converted_images = convert_images(images)
 
-ex = get_biggest_digit(converted_images[0])
+ex = get_biggest_digit(converted_images[16])
 plt.imshow(ex)
 plt.show()
 
+'''
 filtered_images = filter_images(converted_images)
 
 first = filtered_images[0]
@@ -104,3 +104,4 @@ images = get_pickle_data(filtered_filename)
 image = images[0]
 plt.imshow(image)
 plt.show()
+'''
