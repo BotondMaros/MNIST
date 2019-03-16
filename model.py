@@ -19,6 +19,7 @@ from torch.autograd import Variable
 
 data_folder = './data/'
 train_filename = data_folder + 'train_images.pkl'
+filtered_filename = data_folder + 'filtered_images.pkl'
 labels_filename = data_folder + 'train_labels.csv'
 test_filename = data_folder + 'test_images.pkl'
 validation_cutoff = 35000
@@ -47,9 +48,9 @@ def get_biggest_digit(image):
     blur = cv2.GaussianBlur(image,(7,7),0)
     _,img_bin = cv2.threshold(blur,127,255,cv2.THRESH_OTSU)
     contours,_ = cv2.findContours(img_bin.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    cont = np.array(contours)
-    largest = sorted(contours, key=lambda x: cv2.contourArea(x))[-2]
-    index = contours.index(largest)
+    contareas = [cv2.contourArea(c) for c in contours]
+    sorted_contareas = sorted(contareas)
+    index = contareas.index(sorted_contareas[-1])
     white = (np.zeros(image.shape)).astype(np.uint8)
     mask = cv2.drawContours(white, contours,index,255,-1)
     return(mask)
@@ -57,13 +58,12 @@ def get_biggest_digit(image):
 def get_biggest_digit2(image):
     img_bin = cv2.adaptiveThreshold(image,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,5)
     contours,_ = cv2.findContours(img_bin.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    
-    largest = sorted(contours, key=lambda x: cv2.contourArea(x))[-2]
-    index = contours.index(largest.all())
+    contareas = [cv2.contourArea(c) for c in contours]
+    sorted_contareas = sorted(contareas)
+    index = contareas.index(sorted_contareas[-1])
     white = (np.zeros(image.shape)).astype(np.uint8)
     mask = cv2.drawContours(white, contours,index,255,-1)
     return(mask)
-
 
 def filter_images(images):
     fil = lambda image: get_biggest_digit(image)
@@ -77,19 +77,30 @@ def filter_images2(images):
 
 images = get_pickle_data(train_filename)
 labels = get_labels_from_csv()
+
 '''
-image = filter_images2(convert_images(images))[16]
-plt.imshow(image)
+first = images[0]
+plt.imshow(first)
 plt.show()
 
 '''
+#Filtering the noise in raw data
+
 converted_images = convert_images(images)
 
-
-image = get_biggest_digit(converted_images[16])
-plt.imshow(image,cmap='gray')
-plt.show()
-image2 = get_biggest_digit2(converted_images[16])
-plt.imshow(image2,cmap='gray')
+ex = get_biggest_digit(converted_images[0])
+plt.imshow(ex)
 plt.show()
 
+filtered_images = filter_images(converted_images)
+
+first = filtered_images[0]
+plt.imshow(first)
+plt.show()
+
+pkl.dump(filtered_images, open('./data/filtered_images.pkl','wb'))
+
+images = get_pickle_data(filtered_filename)
+image = images[0]
+plt.imshow(image)
+plt.show()
