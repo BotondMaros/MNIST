@@ -23,8 +23,8 @@ test_filename = data_folder + 'test_images.pkl'
 
 num_epochs = 6
 num_classes = 10
-batch_size = 100
-learning_rate = 0.001
+batch_size = 64
+learning_rate = 0.0005
 
 random_seed = 1
 torch.backends.cudnn.enabled = False
@@ -222,7 +222,7 @@ with torch.no_grad():
     print('with runtime: {}',(time.time()-start))
 
 # Save the model and plot
-torch.save(model.state_dict(), 'resnet_model2.ckpt')
+torch.save(model.state_dict(), 'resnet_model3.ckpt')
 
 #runtime 1 epoch cpu 1815.2853739261627 56.3 % batch 100 learning rate 0.01
 #runtime 2 epochs cpu 3390.8379423618317 78.28
