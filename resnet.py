@@ -21,7 +21,7 @@ labels_filename = data_folder + 'train_labels.csv'
 test_filename = data_folder + 'test_images.pkl'
 
 
-num_epochs = 1
+num_epochs = 6
 num_classes = 10
 batch_size = 100
 learning_rate = 0.001
@@ -44,7 +44,7 @@ for i in range(len(train_images)):
 
 train_labels = train_labels['Category'].values
 
-X_train, X_test, y_train, y_test = train_test_split(train_images, train_labels, test_size=0.15)
+X_train, X_test, y_train, y_test = train_test_split(train_images, train_labels, test_size=0.001)
 
 #Transform data
 #create feature and target tensor for train and test
@@ -55,8 +55,8 @@ torch_y_test = torch.from_numpy(y_test).type(torch.LongTensor) # data type is lo
 
 torch_X_train = torch_X_train.view(-1, 1,64,64).float()
 torch_X_test = torch_X_test.view(-1,1,64,64).float()
-#train.size = torch.Size([34000, 1, 64, 64])
-#test.size = torch.Size([6000, 1, 64, 64])
+#train.size = torch.Size([39996, 1, 64, 64])
+#test.size = torch.Size([4, 1, 64, 64])
 
 # Pytorch train and test sets
 train = torch.utils.data.TensorDataset(torch_X_train,torch_y_train)
@@ -65,6 +65,8 @@ test = torch.utils.data.TensorDataset(torch_X_test,torch_y_test)
 # data loader
 train_loader = torch.utils.data.DataLoader(train, batch_size = batch_size, shuffle = False)
 test_loader = torch.utils.data.DataLoader(test, batch_size = batch_size, shuffle = False)
+
+start = time.time()
 
 def conv3x3(in_planes, out_planes, stride=1):
     "3x3 convolution with padding"
@@ -193,13 +195,17 @@ for epoch in range(num_epochs):
         _, predicted = torch.max(outputs.data, 1)
         correct = (predicted == labels).sum().item()
         acc_list.append(correct / total)
-
         if (i + 1) % 100 == 0:
             print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Accuracy: {:.2f}%'
                   .format(epoch + 1, num_epochs, i + 1, total_step, loss.item(),
                           (correct / total) * 100))
-
+plt.plot(loss_list)
+plt.xlabel("Steps")
+plt.ylabel("Loss")
+plt.title("Loss curve over time")
+plt.show()
 # Test the model
+
 model.eval()
 with torch.no_grad():
     correct = 0
@@ -213,8 +219,15 @@ with torch.no_grad():
         correct += (predicted == labels).sum().item()
 
     print('Test Accuracy of the model on the 10000 test images: {} %'.format((correct / total) * 100))
+    print('with runtime: {}',(time.time()-start))
 
 # Save the model and plot
-torch.save(model.state_dict(), 'resnet_model.ckpt')
+torch.save(model.state_dict(), 'resnet_model2.ckpt')
 
+#runtime 1 epoch cpu 1815.2853739261627 56.3 % batch 100 learning rate 0.01
+#runtime 2 epochs cpu 3390.8379423618317 78.28
+#runtime 3 epochs cpu 5565.110957860947 80.21
+#runtime 1 epoch gpu 193.00 47.9 %
+#runtime 2 epochs gpu 373.43 81.0 %
+#runtime 3 epochs gpu 583.37s 75.14%
 # predict
