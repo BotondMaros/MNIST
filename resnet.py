@@ -36,6 +36,12 @@ train_images = pd.read_pickle(train_filename)
 train_labels = pd.read_csv(labels_filename)
 test_images = pd.read_pickle(test_filename)
 
+f = lambda x: 0 if x < 255 else 255
+vf = np.vectorize(f)
+for i in range(len(train_images)):
+    for j in range(len(train_images[i])):
+        vf(train_images[i][j])
+
 train_labels = train_labels['Category'].values
 
 X_train, X_test, y_train, y_test = train_test_split(train_images, train_labels, test_size=0.15)
@@ -156,6 +162,7 @@ class ResNet(nn.Module):
         x = self.fc(x)
 
         return x
+
 
 
 model = ResNet(BasicBlock, [2, 2, 2, 2])
