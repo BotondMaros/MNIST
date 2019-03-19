@@ -16,15 +16,15 @@ from torch.autograd import Variable
 from sklearn.model_selection import train_test_split
 
 data_folder = './data/'
-train_filename = data_folder + 'train_images.pkl'
+train_filename = data_folder +'train_images.pkl'
 labels_filename = data_folder + 'train_labels.csv'
 test_filename = data_folder + 'test_images.pkl'
 
 
-num_epochs = 10
+num_epochs = 15
 num_classes = 10
-batch_size = 32
-learning_rate = 0.0005
+batch_size = 16
+learning_rate = 0.00005
 
 random_seed = 1
 torch.backends.cudnn.enabled = False
@@ -36,15 +36,16 @@ train_images = pd.read_pickle(train_filename)
 train_labels = pd.read_csv(labels_filename)
 test_images = pd.read_pickle(test_filename)
 
+'''
 f = lambda x: 0 if x < 255 else 255
 vf = np.vectorize(f)
 for i in range(len(train_images)):
     for j in range(len(train_images[i])):
         vf(train_images[i][j])
-
+'''
 train_labels = train_labels['Category'].values
 
-X_train, X_test, y_train, y_test = train_test_split(train_images, train_labels, test_size=0.1)
+X_train, X_test, y_train, y_test = train_test_split(train_images, train_labels, test_size=0.0001)
 
 #Transform data
 #create feature and target tensor for train and test
@@ -112,11 +113,11 @@ class Bottleneck(nn.Module):
         return out
 
 
-class ResNet(nn.Module):
+class ResNet152(nn.Module):
 
     def __init__(self, block, layers, num_classes=num_classes):
         self.inplanes = 64
-        super(ResNet, self).__init__()
+        super(ResNet152, self).__init__()
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3,
                                bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -173,7 +174,7 @@ class ResNet(nn.Module):
 
 
 
-model = ResNet(Bottleneck, [3, 4, 6, 3])
+model = ResNet152(Bottleneck, [3, 8, 36, 3])
 model = model.to(device)
 # Loss and optimizer
 criterion = nn.CrossEntropyLoss()

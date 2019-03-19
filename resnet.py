@@ -21,7 +21,7 @@ labels_filename = data_folder + 'train_labels.csv'
 test_filename = data_folder + 'test_images.pkl'
 
 
-num_epochs = 9
+num_epochs = 7
 num_classes = 10
 batch_size = 32
 learning_rate = 0.0005
@@ -36,12 +36,13 @@ train_images = pd.read_pickle(train_filename)
 train_labels = pd.read_csv(labels_filename)
 test_images = pd.read_pickle(test_filename)
 
+'''
 f = lambda x: 0 if x < 255 else 255
 vf = np.vectorize(f)
 for i in range(len(train_images)):
     for j in range(len(train_images[i])):
         vf(train_images[i][j])
-
+'''
 train_labels = train_labels['Category'].values
 
 X_train, X_test, y_train, y_test = train_test_split(train_images, train_labels, test_size=0.001)
@@ -199,11 +200,13 @@ for epoch in range(num_epochs):
             print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Accuracy: {:.2f}%'
                   .format(epoch + 1, num_epochs, i + 1, total_step, loss.item(),
                           (correct / total) * 100))
+                       
 plt.plot(loss_list)
 plt.xlabel("Steps")
 plt.ylabel("Loss")
 plt.title("Loss curve over time")
 plt.show()
+
 # Test the model
 
 model.eval()
@@ -222,17 +225,6 @@ with torch.no_grad():
     print('with runtime: {}',(time.time()-start))
 
 # Save the model and plot
-torch.save(model.state_dict(), 'resnet_model_deepest_basic.ckpt')
+torch.save(model.state_dict(), 'final.ckpt')
 
-#runtime 1 epoch cpu 1815.2853739261627 56.3 % batch 100 learning rate 0.01
-#runtime 2 epochs cpu 3390.8379423618317 78.28
-#runtime 3 epochs cpu 5565.110957860947 80.21
-#runtime 1 epoch gpu 193.00 47.9 %
-#runtime 2 epochs gpu 373.43 81.0 %
-#runtime 3 epochs gpu 583.37s 75.14%
-# predict
 
-# deeper model batch 32 learning rate 0.0005 5 epochs - 92.5 on validation 
-# even_deeper batch 64 learning rate 0.0005 7 epochs - 87.5 %
-# deepest batch 32 learning rate 0.0005 9 epochs -
-# [3, 8, 36, 3]
